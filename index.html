@@ -430,6 +430,7 @@
     <h2 id="result-title"></h2>
     <p id="result-msg"></p>
     <div class="answer" id="result-answer"></div>
+    <div id="result-time" style="font-family:'Barlow Condensed',sans-serif;font-size:1rem;letter-spacing:2px;color:var(--muted);margin-top:6px;"></div>
     <div class="share-preview" id="share-preview"></div>
     <div class="share-copied" id="share-copied"></div>
     <div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:14px;">
@@ -499,6 +500,8 @@ let filteredPlayers = [];
 let _sp = null;
 let dailySolved = false;
 let dailyGuesses = [];
+let _timerStart = null;
+let _timerEnd = null;
 
 function getDailyPlayer() {
   const day = Math.floor(Date.now() / 86400000);
@@ -527,13 +530,16 @@ function resetGame() {
         dailySolved = s.solved;
       } else {
         guesses = []; gameOver = false; dailySolved = false;
+        _timerStart = null; _timerEnd = null;
       }
     } else {
       guesses = []; gameOver = false; dailySolved = false;
+      _timerStart = null; _timerEnd = null;
     }
   } else {
     _m = UNIQUE_PLAYERS[Math.floor(Math.random() * UNIQUE_PLAYERS.length)];
     guesses = []; gameOver = false;
+    _timerStart = null; _timerEnd = null;
   }
   _sp = null;
   selectedIdx = -1;
@@ -701,6 +707,7 @@ document.addEventListener('click', e => {
 // ─── GUESS LOGIC ───────────────────────────────────────────────────────
 function submitGuess() {
   if (!_sp || gameOver) return;
+  if (!_timerStart) _timerStart = Date.now();
   guesses.push(_sp);
   _sp = null;
   document.getElementById('search-input').value = '';
@@ -710,6 +717,7 @@ function submitGuess() {
   const won = guesses[guesses.length - 1].gamertag.toLowerCase() === _m.gamertag.toLowerCase();
   const lost = !won && guesses.length >= MAX_GUESSES;
   if (won || lost) {
+    _timerEnd = Date.now();
     gameOver = true;
     if (mode === 'daily') {
       sessionStorage.setItem('puck_daily', JSON.stringify({
@@ -777,6 +785,17 @@ function showResult() {
     ? `You got it in ${guesses.length} guess${guesses.length > 1 ? 'es' : ''}!`
     : 'The answer was:';
   document.getElementById('result-answer').textContent = _m.gamertag;
+
+  const _timeEl = document.getElementById('result-time');
+  if (_timerStart && _timerEnd) {
+    const _ms = _timerEnd - _timerStart;
+    const _min = Math.floor(_ms / 60000);
+    const _sec = Math.floor((_ms % 60000) / 1000);
+    const _csec = Math.floor((_ms % 1000) / 10);
+    _timeEl.textContent = `${String(_min).padStart(2,'0')}:${String(_sec).padStart(2,'0')}:${String(_csec).padStart(2,'0')}`;
+  } else {
+    _timeEl.textContent = '';
+  }
 
   showSharePreview();
 
