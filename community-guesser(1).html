@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PUCK? — Community Player Guesser</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Barlow+Condensed:wght@400;600;700&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0a0c10;
+    --surface: #111318;
+    --surface2: #181b22;
+    --border: #22262f;
+    --text: #e8eaf0;
+    --muted: #5a6070;
+    --accent: #00d4ff;
+    --accent2: #ff4060;
+    --green: #00e676;
+    --yellow: #ffd740;
+    --red: #ff4060;
+    --grey: #2a2e38;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* Background rink lines */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 40% at 50% 0%, rgba(0,212,255,0.06) 0%, transparent 70%),
+      repeating-linear-gradient(0deg, transparent, transparent 79px, rgba(255,255,255,0.015) 79px, rgba(255,255,255,0.015) 80px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrap { position: relative; z-index: 1; width: 100%; max-width: 900px; padding: 0 16px 60px; }
+
+  /* HEADER */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 28px 0 24px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 28px;
+  }
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.8rem;
+    letter-spacing: 4px;
+    color: var(--text);
+    line-height: 1;
+  }
+  .logo span { color: var(--accent); }
+  .mode-tabs {
+    display: flex;
+    gap: 6px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px;
+  }
+  .mode-tab {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 7px 18px;
+    border-radius: 4px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .mode-tab.active {
+    background: var(--accent);
+    color: #000;
+  }
+
+  /* STATUS BAR */
+  .status-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .daily-info {
+    font-size: 0.72rem;
+    letter-spacing: 1px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  .daily-info strong { color: var(--accent); }
+
+  /* COLUMN HEADERS */
+  .grid-header {
+    display: grid;
+    grid-template-columns: 180px repeat(5, 1fr);
+    gap: 4px;
+    margin-bottom: 6px;
+  }
+  .col-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-align: center;
+    padding: 4px 0;
+  }
+  .col-label:first-child { text-align: left; padding-left: 8px; }
+
+  /* GUESS ROWS */
+  .guess-rows { display: flex; flex-direction: column; gap: 4px; margin-bottom: 16px; }
+
+  .guess-row {
+    display: grid;
+    grid-template-columns: 180px repeat(5, 1fr);
+    gap: 4px;
+    animation: rowIn 0.3s ease;
+  }
+  @keyframes rowIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .cell {
+    background: var(--grey);
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 4px;
+    min-height: 56px;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    transition: background 0.4s, color 0.4s;
+  }
+  .cell.player-cell {
+    align-items: flex-start;
+    padding: 8px 10px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    background: var(--surface2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    justify-content: center;
+    gap: 2px;
+  }
+  .cell.player-cell .gt { font-family: 'Barlow Condensed', sans-serif; font-size: 1rem; font-weight: 700; letter-spacing: 1px; }
+  .cell.green  { background: #003d25; border: 1px solid var(--green); color: var(--green); }
+  .cell.yellow { background: #3d3000; border: 1px solid var(--yellow); color: var(--yellow); }
+  .cell.red    { background: #2a0a10; border: 1px solid var(--red); color: var(--red); }
+
+  .cell .arrow { font-size: 1rem; display: block; }
+  .cell .val   { font-size: 0.68rem; margin-top: 1px; }
+
+  /* Empty placeholder rows */
+  .empty-row {
+    display: grid;
+    grid-template-columns: 180px repeat(5, 1fr);
+    gap: 4px;
+  }
+  .empty-cell {
+    background: var(--surface);
+    border: 1px dashed var(--border);
+    border-radius: 4px;
+    min-height: 56px;
+  }
+
+  /* INPUT */
+  .input-area {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    position: relative;
+  }
+  .search-wrap { flex: 1; position: relative; }
+  .search-input {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.9rem;
+    padding: 12px 16px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .search-input:focus { border-color: var(--accent); }
+  .search-input::placeholder { color: var(--muted); }
+
+  .autocomplete {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0; right: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    z-index: 100;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  }
+  .autocomplete-item {
+    padding: 10px 16px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .autocomplete-item:last-child { border-bottom: none; }
+  .autocomplete-item:hover, .autocomplete-item.selected { background: var(--surface2); }
+  .autocomplete-item .tag {
+    font-size: 0.68rem;
+    color: var(--muted);
+    font-family: 'Barlow Condensed', sans-serif;
+    letter-spacing: 1px;
+  }
+
+  .guess-btn {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 12px 28px;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+  }
+  .guess-btn:hover { opacity: 0.85; }
+  .guess-btn:active { transform: scale(0.97); }
+  .guess-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  /* LEGEND */
+  .legend {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.7rem;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+  }
+  .legend-dot {
+    width: 12px; height: 12px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+  .legend-dot.green  { background: var(--green); }
+  .legend-dot.yellow { background: var(--yellow); }
+  .legend-dot.red    { background: var(--red); }
+
+  /* RESULT BANNER */
+  .result-banner {
+    display: none;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px;
+    text-align: center;
+    margin-top: 20px;
+    animation: rowIn 0.4s ease;
+  }
+  .result-banner.show { display: block; }
+  .result-banner h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.2rem;
+    letter-spacing: 3px;
+    margin-bottom: 8px;
+  }
+  .result-banner h2.win  { color: var(--green); }
+  .result-banner h2.lose { color: var(--red); }
+  .result-banner p { font-size: 0.8rem; color: var(--muted); margin-bottom: 16px; }
+  .result-banner .answer { font-family: 'Barlow Condensed', sans-serif; font-size: 1.4rem; font-weight: 700; color: var(--text); letter-spacing: 2px; }
+
+  .play-again-btn {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 10px 28px;
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 14px;
+    transition: all 0.2s;
+  }
+  .play-again-btn:hover { background: var(--accent); color: #000; }
+
+  /* Daily countdown */
+  .countdown { font-size: 0.75rem; color: var(--muted); margin-top: 8px; letter-spacing: 1px; }
+  .countdown span { color: var(--accent); }
+
+  /* SHARE */
+  .share-btn {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 10px 28px;
+    background: var(--green);
+    color: #000;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 14px;
+    margin-left: 8px;
+    transition: opacity 0.2s;
+    display: none;
+  }
+  .share-btn:hover { opacity: 0.85; }
+  .share-copied {
+    font-size: 0.72rem;
+    color: var(--green);
+    letter-spacing: 1px;
+    margin-top: 8px;
+    height: 16px;
+    transition: opacity 0.3s;
+  }
+  .share-preview {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.82rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin: 14px auto 0;
+    max-width: 340px;
+    text-align: left;
+    line-height: 1.7;
+    white-space: pre;
+    color: var(--text);
+  }
+
+  
+
+  /* Responsive */
+  @media (max-width: 680px) {
+    .grid-header, .guess-row, .empty-row {
+      grid-template-columns: 130px repeat(5, 1fr);
+    }
+    .col-label { font-size: 0.6rem; letter-spacing: 1px; }
+    .cell { font-size: 0.62rem; min-height: 48px; padding: 6px 2px; }
+    .cell.player-cell { font-size: 0.7rem; padding: 6px 6px; }
+    .cell.player-cell .gt { font-size: 0.85rem; }
+    .logo { font-size: 2rem; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="logo">PU<span>CK?</span></div>
+    <div class="mode-tabs">
+      <button class="mode-tab active" id="tab-daily" onclick="setMode('daily')">Daily</button>
+      <button class="mode-tab" id="tab-free" onclick="setMode('free')">Free Play</button>
+    </div>
+  </header>
+
+  <div class="status-bar">
+    <div class="daily-info" id="daily-info">Daily Challenge — <strong id="daily-date"></strong></div>
+  </div>
+
+  <div class="input-area" id="input-area">
+    <div class="search-wrap">
+      <input class="search-input" id="search-input" type="text" placeholder="Type a player name..." autocomplete="off" />
+      <div class="autocomplete" id="autocomplete" style="display:none"></div>
+    </div>
+    <button class="guess-btn" id="guess-btn" onclick="submitGuess()" disabled>Guess</button>
+  </div>
+
+  <div class="grid-header">
+    <div class="col-label">Player</div>
+    <div class="col-label">League</div>
+    <div class="col-label">Season</div>
+    <div class="col-label">Team</div>
+    <div class="col-label">Pos</div>
+    <div class="col-label">GP <span style="font-size:0.55rem;color:var(--muted);font-weight:400;letter-spacing:0">(min 4)</span></div>
+  </div>
+
+  <div class="guess-rows" id="guess-rows"></div>
+  <div id="empty-rows"></div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot green"></div> Exact match</div>
+    <div class="legend-item"><div class="legend-dot yellow"></div> Close / shared team history</div>
+    <div class="legend-item"><div class="legend-dot red"></div> No match</div>
+  </div>
+
+  <div class="result-banner" id="result-banner">
+    <h2 id="result-title"></h2>
+    <p id="result-msg"></p>
+    <div class="answer" id="result-answer"></div>
+    <div class="share-preview" id="share-preview"></div>
+    <div class="share-copied" id="share-copied"></div>
+    <div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:14px;">
+      <button class="play-again-btn" id="play-again-btn" onclick="playAgain()" style="display:none;margin-top:0;">Play Again</button>
+      <button class="share-btn" id="share-btn" onclick="shareResult()">&#128279; Share Result</button>
+    </div>
+    <div class="countdown" id="result-countdown" style="margin-top:14px;"></div>
+  </div>
+
+</div>
+
+<script>
+// ─── DATA ──────────────────────────────────────────────────────────────
+const _d = (s) => { const b = atob(s); const k = 42; const o = new Uint8Array(b.length); for(let i=0;i<b.length;i++) o[i]=b.charCodeAt(i)^k; return JSON.parse(new TextDecoder().decode(o)); };
+const _raw = _d("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");
+const PLAYERS = _raw.map(r => ({gamertag:r[0],team:r[1],gp:r[2],season:r[3],position:r[4],league:r[5]}));
+
+// ─── CONFIG ────────────────────────────────────────────────────────────
+const MAX_GUESSES = 4;
+const STATS = ["league","season","team","position","gp"];
+const _lo = ["PHL D1","PHL D2","PHL D3"];
+const _so = [1,2,3];
+const _gc = 5;
+const LEAGUE_ORDER = _lo;
+const SEASON_ORDER = _so;
+const GP_CLOSE = _gc;
+
+// ─── PLAYER MAP ────────────────────────────────────────────────────────
+function buildPlayerMap() {
+  const map = new Map();
+  PLAYERS.forEach(row => {
+    const key = row.gamertag.toLowerCase();
+    if (!map.has(key)) {
+      map.set(key, {
+        gamertag: row.gamertag,
+        league: row.league,
+        season: row.season,
+        team: row.team,
+        position: row.position,
+        gp: row.gp,
+        allTeams: new Set([row.team]),
+      });
+    } else {
+      const p = map.get(key);
+      p.allTeams.add(row.team);
+      if (row.season > p.season) {
+        p.season = row.season;
+        p.team = row.team;
+        p.position = row.position;
+        p.league = row.league;
+        p.gp = row.gp;
+      }
+    }
+  });
+  return map;
+}
+const PLAYER_MAP = buildPlayerMap();
+const UNIQUE_PLAYERS = Array.from(PLAYER_MAP.values());
+
+// ─── STATE ─────────────────────────────────────────────────────────────
+let mode = 'daily';
+let _m = null;
+let guesses = [];
+let gameOver = false;
+let selectedIdx = -1;
+let filteredPlayers = [];
+let _sp = null;
+let dailySolved = false;
+let dailyGuesses = [];
+
+function getDailyPlayer() {
+  const day = Math.floor(Date.now() / 86400000);
+  return UNIQUE_PLAYERS[day % UNIQUE_PLAYERS.length];
+}
+
+function setMode(m) {
+  mode = m;
+  document.getElementById('tab-daily').classList.toggle('active', m === 'daily');
+  document.getElementById('tab-free').classList.toggle('active',  m === 'free');
+  document.getElementById('daily-info').style.display = m === 'daily' ? '' : 'none';
+  resetGame();
+}
+
+function resetGame() {
+  if (mode === 'daily') {
+    _m = getDailyPlayer();
+    // Restore daily state from sessionStorage
+    const saved = sessionStorage.getItem('puck_daily');
+    if (saved) {
+      const s = JSON.parse(saved);
+      const today = new Date().toDateString();
+      if (s.date === today) {
+        guesses = s.guesses;
+        gameOver = s.gameOver;
+        dailySolved = s.solved;
+      } else {
+        guesses = []; gameOver = false; dailySolved = false;
+      }
+    } else {
+      guesses = []; gameOver = false; dailySolved = false;
+    }
+  } else {
+    _m = UNIQUE_PLAYERS[Math.floor(Math.random() * UNIQUE_PLAYERS.length)];
+    guesses = []; gameOver = false;
+  }
+  _sp = null;
+  selectedIdx = -1;
+  filteredPlayers = [];
+  renderAll();
+  if (gameOver) showResult();
+}
+
+// ─── RENDER ────────────────────────────────────────────────────────────
+function renderAll() {
+  renderDate();
+  renderRows();
+  renderEmpty();
+  if (!gameOver) document.getElementById('result-banner').classList.remove('show');
+  document.getElementById('search-input').value = '';
+  document.getElementById('autocomplete').style.display = 'none';
+  document.getElementById('guess-btn').disabled = true;
+  const inputArea = document.getElementById('input-area');
+  inputArea.style.display = gameOver ? 'none' : '';
+}
+
+function renderDate() {
+  const d = new Date();
+  document.getElementById('daily-date').textContent =
+    d.toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'});
+}
+
+function evaluate(guessed, target) {
+  // Always resolve from PLAYER_MAP so allTeams is always a proper Set
+  const g = PLAYER_MAP.get(guessed.gamertag.toLowerCase());
+  const t = PLAYER_MAP.get(target.gamertag.toLowerCase());
+  if (!g || !t) return STATS.map(() => ({ result: 'red', display: '?', arrow: null }));
+  return STATS.map(stat => {
+    if (stat === 'gp') {
+      const gv = g.gp, tv = t.gp;
+      if (gv === tv) return { result: 'green', display: String(gv), arrow: null };
+      const diff = gv - tv;
+      if (Math.abs(diff) <= GP_CLOSE) return { result: 'yellow', display: String(gv), arrow: diff > 0 ? '↓' : '↑' };
+      return { result: 'red', display: String(gv), arrow: diff > 0 ? '↓' : '↑' };
+    }
+    const gv = g[stat], tv = t[stat];
+    if (stat === 'team') {
+      if (gv === tv) return { result: 'green', display: gv, arrow: null };
+      const sharedTeam = t.allTeams.has(gv);
+      return { result: sharedTeam ? 'yellow' : 'red', display: gv, arrow: null };
+    }
+    if (gv === tv) return { result: 'green', display: String(gv), arrow: null };
+    if (stat === 'league') {
+      const gi = LEAGUE_ORDER.indexOf(gv), ti = LEAGUE_ORDER.indexOf(tv);
+      if (Math.abs(gi - ti) === 1) return { result: 'yellow', display: gv, arrow: gi > ti ? '↓' : '↑' };
+    }
+    if (stat === 'season') {
+      const gi = SEASON_ORDER.indexOf(Number(gv)), ti = SEASON_ORDER.indexOf(Number(tv));
+      if (Math.abs(gi - ti) === 1) return { result: 'yellow', display: String(gv), arrow: gi > ti ? '↓' : '↑' };
+    }
+    return { result: 'red', display: String(gv), arrow: null };
+  });
+}
+
+function renderRows() {
+  const container = document.getElementById('guess-rows');
+  container.innerHTML = '';
+  guesses.forEach(g => {
+    const results = evaluate(g, _m);
+    const row = document.createElement('div');
+    row.className = 'guess-row';
+
+    // Player cell
+    const pc = document.createElement('div');
+    pc.className = 'cell player-cell';
+    pc.innerHTML = `<span class="gt">${g.gamertag}</span>`;
+    row.appendChild(pc);
+
+    results.forEach(r => {
+      const c = document.createElement('div');
+      c.className = `cell ${r.result}`;
+      if (r.arrow) {
+        c.innerHTML = `<span class="arrow">${r.arrow}</span><span class="val">${r.display}</span>`;
+      } else {
+        c.textContent = r.display;
+      }
+      row.appendChild(c);
+    });
+    container.appendChild(row);
+  });
+}
+
+function renderEmpty() {
+  const container = document.getElementById('empty-rows');
+  container.innerHTML = '';
+  const remaining = MAX_GUESSES - guesses.length;
+  for (let i = 0; i < remaining; i++) {
+    const row = document.createElement('div');
+    row.className = 'empty-row';
+    for (let j = 0; j < 6; j++) {
+      const c = document.createElement('div');
+      c.className = 'empty-cell';
+      row.appendChild(c);
+    }
+    container.appendChild(row);
+  }
+}
+
+
+// ─── AUTOCOMPLETE ──────────────────────────────────────────────────────
+function onSearch() {
+  const q = document.getElementById('search-input').value.trim().toLowerCase();
+  _sp = null;
+  document.getElementById('guess-btn').disabled = true;
+  if (!q) { document.getElementById('autocomplete').style.display = 'none'; return; }
+
+  const guessedTags = guesses.map(g => g.gamertag.toLowerCase());
+  filteredPlayers = UNIQUE_PLAYERS.filter(p =>
+    p.gamertag.toLowerCase().includes(q) && !guessedTags.includes(p.gamertag.toLowerCase())
+  );
+  selectedIdx = -1;
+  renderAutocomplete();
+}
+
+function renderAutocomplete() {
+  const box = document.getElementById('autocomplete');
+  if (!filteredPlayers.length) { box.style.display = 'none'; return; }
+  box.innerHTML = '';
+  filteredPlayers.forEach((p, i) => {
+    const item = document.createElement('div');
+    item.className = 'autocomplete-item' + (i === selectedIdx ? ' selected' : '');
+    item.innerHTML = `<span>${p.gamertag}</span>`;
+    item.onclick = () => selectPlayer(p);
+    box.appendChild(item);
+  });
+  box.style.display = 'block';
+}
+
+function selectPlayer(p) {
+  _sp = p;
+  document.getElementById('search-input').value = p.gamertag;
+  document.getElementById('autocomplete').style.display = 'none';
+  document.getElementById('guess-btn').disabled = !_sp;
+}
+
+function onKey(e) {
+  if (e.key === 'ArrowDown') {
+    selectedIdx = Math.min(selectedIdx + 1, filteredPlayers.length - 1);
+    renderAutocomplete();
+  } else if (e.key === 'ArrowUp') {
+    selectedIdx = Math.max(selectedIdx - 1, 0);
+    renderAutocomplete();
+  } else if (e.key === 'Enter') {
+    if (selectedIdx >= 0 && filteredPlayers[selectedIdx]) {
+      selectPlayer(filteredPlayers[selectedIdx]);
+    } else if (_sp) {
+      submitGuess();
+    }
+  } else if (e.key === 'Escape') {
+    document.getElementById('autocomplete').style.display = 'none';
+  }
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.search-wrap')) {
+    document.getElementById('autocomplete').style.display = 'none';
+  }
+});
+
+// ─── GUESS LOGIC ───────────────────────────────────────────────────────
+function submitGuess() {
+  if (!_sp || gameOver) return;
+  guesses.push(_sp);
+  _sp = null;
+  document.getElementById('search-input').value = '';
+  document.getElementById('guess-btn').disabled = true;
+  document.getElementById('autocomplete').style.display = 'none';
+
+  const won = guesses[guesses.length - 1].gamertag.toLowerCase() === _m.gamertag.toLowerCase();
+  const lost = !won && guesses.length >= MAX_GUESSES;
+  if (won || lost) {
+    gameOver = true;
+    if (mode === 'daily') {
+      sessionStorage.setItem('puck_daily', JSON.stringify({
+        date: new Date().toDateString(),
+        guesses, gameOver, solved: won
+      }));
+    }
+  }
+  if (gameOver) {
+    renderAll();
+    setTimeout(showResult, 400);
+  } else {
+    renderAll();
+  }
+}
+
+function buildShareText() {
+  const won = guesses.some(g => g.gamertag.toLowerCase() === _m.gamertag.toLowerCase());
+  const d = new Date().toLocaleDateString('en-US', {month:'short', day:'numeric'});
+  const modeLabel = mode === 'daily' ? 'Daily' : 'Free Play';
+  const result = won ? `${guesses.length}/${MAX_GUESSES}` : `X/${MAX_GUESSES}`;
+  const EMOJI = { green: '🟩', yellow: '🟨', red: '🟥' };
+  const rows = guesses.map(g => {
+    const results = evaluate(g, _m);
+    return results.map(r => EMOJI[r.result]).join('');
+  }).join('\n');
+  return `PUCK ${modeLabel} — ${d}\n${result}\n\n${rows}`;
+}
+
+function showSharePreview() {
+  const text = buildShareText();
+  const pre = document.getElementById('share-preview');
+  pre.textContent = text;
+  pre.style.display = 'block';
+  document.getElementById('share-btn').style.display = '';
+}
+
+function shareResult() {
+  const text = buildShareText();
+  navigator.clipboard.writeText(text).then(() => {
+    const el = document.getElementById('share-copied');
+    el.textContent = '✓ Copied to clipboard!';
+    el.style.opacity = 1;
+    setTimeout(() => { el.style.opacity = 0; el.textContent = ''; }, 2500);
+  }).catch(() => {
+    // fallback: select the pre text
+    const pre = document.getElementById('share-preview');
+    const range = document.createRange();
+    range.selectNodeContents(pre);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+  });
+}
+
+function showResult() {
+  const banner = document.getElementById('result-banner');
+  const won = guesses.some(g => g.gamertag.toLowerCase() === _m.gamertag.toLowerCase());
+  banner.classList.add('show');
+
+  const title = document.getElementById('result-title');
+  title.textContent = won ? '🏒 Correct!' : 'Nice Try!';
+  title.className = won ? 'win' : 'lose';
+
+  document.getElementById('result-msg').textContent = won
+    ? `You got it in ${guesses.length} guess${guesses.length > 1 ? 'es' : ''}!`
+    : 'The answer was:';
+  document.getElementById('result-answer').textContent = _m.gamertag;
+
+  showSharePreview();
+
+  if (mode === 'daily') {
+    const countdown = document.getElementById('result-countdown');
+    countdown.innerHTML = 'Next daily challenge: <span>' + getCountdown() + '</span>';
+    setInterval(() => { countdown.innerHTML = 'Next daily challenge: <span>' + getCountdown() + '</span>'; }, 1000);
+  }
+
+  const btn = document.getElementById('play-again-btn');
+  btn.style.display = mode === 'free' ? '' : 'none';
+}
+
+function getCountdown() {
+  const now = new Date();
+  const next = new Date();
+  next.setHours(24, 0, 0, 0);
+  const diff = next - now;
+  const h = String(Math.floor(diff / 3600000)).padStart(2,'0');
+  const m = String(Math.floor((diff % 3600000) / 60000)).padStart(2,'0');
+  const s = String(Math.floor((diff % 60000) / 1000)).padStart(2,'0');
+  return `${h}:${m}:${s}`;
+}
+
+function playAgain() {
+  resetGame();
+}
+
+
+
+// ─── INIT ──────────────────────────────────────────────────────────────
+document.getElementById('search-input').addEventListener('input', onSearch);
+document.getElementById('search-input').addEventListener('keydown', onKey);
+setMode('daily');
+</script>
+</body>
+</html>
