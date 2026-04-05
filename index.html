@@ -781,21 +781,19 @@ function showResult() {
   title.textContent = won ? '🏒 Correct!' : 'Nice Try!';
   title.className = won ? 'win' : 'lose';
 
-  document.getElementById('result-msg').textContent = won
-    ? `You got it in ${guesses.length} guess${guesses.length > 1 ? 'es' : ''}!`
-    : 'The answer was:';
-  document.getElementById('result-answer').textContent = _m.gamertag;
-
-  const _timeEl = document.getElementById('result-time');
+  let _timeStr = '';
   if (_timerStart && _timerEnd) {
     const _ms = _timerEnd - _timerStart;
     const _min = Math.floor(_ms / 60000);
     const _sec = Math.floor((_ms % 60000) / 1000);
     const _csec = Math.floor((_ms % 1000) / 10);
-    _timeEl.textContent = `${String(_min).padStart(2,'0')}:${String(_sec).padStart(2,'0')}:${String(_csec).padStart(2,'0')}`;
-  } else {
-    _timeEl.textContent = '';
+    _timeStr = `${_min} Min ${String(_sec).padStart(2,'0')} Sec ${String(_csec).padStart(2,'0')} ms`;
   }
+  document.getElementById('result-msg').textContent = won
+    ? `You got it in ${guesses.length} guess${guesses.length > 1 ? 'es' : ''}${_timeStr ? ' and it took ' + _timeStr : ''}!`
+    : 'The answer was:';
+  document.getElementById('result-answer').textContent = _m.gamertag;
+  document.getElementById('result-time').textContent = '';
 
   showSharePreview();
 
