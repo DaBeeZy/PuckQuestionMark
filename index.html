@@ -528,6 +528,8 @@ function resetGame() {
         guesses = s.guesses;
         gameOver = s.gameOver;
         dailySolved = s.solved;
+        _timerStart = s.timerStart || null;
+        _timerEnd = s.timerEnd || null;
       } else {
         guesses = []; gameOver = false; dailySolved = false;
         _timerStart = null; _timerEnd = null;
@@ -722,7 +724,8 @@ function submitGuess() {
     if (mode === 'daily') {
       sessionStorage.setItem('puck_daily', JSON.stringify({
         date: new Date().toDateString(),
-        guesses, gameOver, solved: won
+        guesses, gameOver, solved: won,
+        timerStart: _timerStart, timerEnd: _timerEnd
       }));
     }
   }
@@ -797,10 +800,13 @@ function showResult() {
 
   showSharePreview();
 
+  const countdown = document.getElementById('result-countdown');
   if (mode === 'daily') {
-    const countdown = document.getElementById('result-countdown');
+    countdown.style.display = '';
     countdown.innerHTML = 'Next daily challenge: <span>' + getCountdown() + '</span>';
     setInterval(() => { countdown.innerHTML = 'Next daily challenge: <span>' + getCountdown() + '</span>'; }, 1000);
+  } else {
+    countdown.style.display = 'none';
   }
 
   const btn = document.getElementById('play-again-btn');
