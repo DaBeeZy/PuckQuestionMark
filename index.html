@@ -109,7 +109,7 @@
   /* COLUMN HEADERS */
   .grid-header {
     display: grid;
-    grid-template-columns: 180px repeat(5, 1fr);
+    grid-template-columns: 180px repeat(7, 1fr);
     gap: 4px;
     margin-bottom: 6px;
   }
@@ -130,7 +130,7 @@
 
   .guess-row {
     display: grid;
-    grid-template-columns: 180px repeat(5, 1fr);
+    grid-template-columns: 180px repeat(7, 1fr);
     gap: 4px;
     animation: rowIn 0.3s ease;
   }
@@ -179,7 +179,7 @@
   /* Empty placeholder rows */
   .empty-row {
     display: grid;
-    grid-template-columns: 180px repeat(5, 1fr);
+    grid-template-columns: 180px repeat(7, 1fr);
     gap: 4px;
   }
   .empty-cell {
@@ -352,7 +352,7 @@
   /* Responsive */
   @media (max-width: 680px) {
     .grid-header, .guess-row, .empty-row {
-      grid-template-columns: 130px repeat(5, 1fr);
+      grid-template-columns: 130px repeat(7, 1fr);
     }
     .col-label { font-size: 0.6rem; letter-spacing: 1px; }
     .cell { font-size: 0.62rem; min-height: 48px; padding: 6px 2px; }
@@ -393,8 +393,10 @@
 
   <div class="grid-header">
     <div class="col-label">Player</div>
+    <div class="col-label">League</div>
     <div class="col-label">Season</div>
     <div class="col-label">Team</div>
+    <div class="col-label">Pos</div>
     <div class="col-label">GP</div>
     <div class="col-label">G</div>
     <div class="col-label">A</div>
@@ -428,7 +430,7 @@ const PLAYERS = _raw.map(r => ({gamertag:r[0],team:r[1],gp:r[2],season:r[3],posi
 
 // ─── CONFIG ────────────────────────────────────────────────────────────
 const MAX_GUESSES = 4;
-const STATS = ["season","team","gp","g","a"];
+const STATS = ["league","season","team","position","gp","g","a"];
 const _lo = ["PHL D1","PHL D2","PHL D3"];
 const _so = [1,2,3];
 const _gc = 5;
@@ -618,7 +620,7 @@ function renderEmpty() {
   for (let i = 0; i < remaining; i++) {
     const row = document.createElement('div');
     row.className = 'empty-row';
-    for (let j = 0; j < 6; j++) {
+    for (let j = 0; j < 8; j++) {
       const c = document.createElement('div');
       c.className = 'empty-cell';
       row.appendChild(c);
@@ -784,10 +786,10 @@ function showResult() {
   if (!won) {
     const _ans = PLAYER_MAP.get(_m.gamertag.toLowerCase());
     if (_ans) {
-      const _labels = ['Season','Team','GP','G','A'];
-      const _vals = [_ans.season, _ans.team, _ans.gp, _ans.g, _ans.a];
+      const _labels = ['League','Season','Team','Pos','GP','G','A'];
+      const _vals = [_ans.league, _ans.season, _ans.team, _ans.position, _ans.gp, _ans.g, _ans.a];
       _fieldsEl.innerHTML = `
-        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;max-width:480px;margin:0 auto;">
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;max-width:480px;margin:0 auto;">
           ${_labels.map(l => `<div style="font-family:'Barlow Condensed',sans-serif;font-size:0.65rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);text-align:center;padding-bottom:3px;">${l}</div>`).join('')}
           ${_vals.map(v => `<div style="background:#003d25;border:1px solid var(--green);color:var(--green);border-radius:4px;padding:8px 4px;font-size:0.8rem;font-weight:500;text-align:center;">${v}</div>`).join('')}
         </div>`;
