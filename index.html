@@ -731,7 +731,7 @@ function buildShareText() {
     const results = evaluate(g, _m);
     return results.map(r => EMOJI[r.result]).join('');
   }).join('\n');
-  return `PUCK ${modeLabel} — ${d}\n${result}\n\n${rows}`;
+  return `PUCK? ${modeLabel} — ${d}\n${result}\n\n${rows}`;
 }
 
 function showSharePreview() {
