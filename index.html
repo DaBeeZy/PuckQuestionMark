@@ -260,29 +260,6 @@
   .guess-btn:active { transform: scale(0.97); }
   .guess-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
-  /* LEGEND */
-  .legend {
-    display: flex;
-    gap: 16px;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-  }
-  .legend-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.7rem;
-    color: var(--muted);
-    letter-spacing: 0.5px;
-  }
-  .legend-dot {
-    width: 12px; height: 12px;
-    border-radius: 2px;
-    flex-shrink: 0;
-  }
-  .legend-dot.green  { background: var(--green); }
-  .legend-dot.yellow { background: var(--yellow); }
-  .legend-dot.red    { background: var(--red); }
 
   /* RESULT BANNER */
   .result-banner {
@@ -400,6 +377,12 @@
     <div class="daily-info" id="daily-info">Daily Challenge — <strong id="daily-date"></strong></div>
   </div>
 
+  <div style="margin-bottom:14px;padding:12px 14px;background:var(--surface);border:1px solid var(--border);border-radius:6px;font-size:0.72rem;line-height:1.7;color:var(--muted);">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.78rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--text);margin-bottom:8px;">Guide</div>
+    <div style="margin-bottom:4px;"><span style="color:var(--text);font-weight:500;">Season</span> — Most recent season correct player finished on a roster and met minimum GP threshold (5+ GP)</div>
+    <div><span style="color:var(--text);font-weight:500;">Team</span> — Yellow means the correct player was a member of the team in previous seasons</div>
+  </div>
+
   <div class="input-area" id="input-area">
     <div class="search-wrap">
       <input class="search-input" id="search-input" type="text" placeholder="Type a player name..." autocomplete="off" />
@@ -410,27 +393,22 @@
 
   <div class="grid-header">
     <div class="col-label">Player</div>
-    <div class="col-label">League</div>
     <div class="col-label">Season</div>
     <div class="col-label">Team</div>
-    <div class="col-label">Pos</div>
-    <div class="col-label">GP <span style="font-size:0.55rem;color:var(--muted);font-weight:400;letter-spacing:0">(min 4)</span></div>
+    <div class="col-label">GP</div>
+    <div class="col-label">G</div>
+    <div class="col-label">A</div>
   </div>
 
   <div class="guess-rows" id="guess-rows"></div>
   <div id="empty-rows"></div>
-
-  <div class="legend">
-    <div class="legend-item"><div class="legend-dot green"></div> Exact match</div>
-    <div class="legend-item"><div class="legend-dot yellow"></div> Close / shared team history</div>
-    <div class="legend-item"><div class="legend-dot red"></div> No match</div>
-  </div>
 
   <div class="result-banner" id="result-banner">
     <h2 id="result-title"></h2>
     <p id="result-msg"></p>
     <div class="answer" id="result-answer"></div>
     <div id="result-time" style="font-family:'Barlow Condensed',sans-serif;font-size:1rem;letter-spacing:2px;color:var(--muted);margin-top:6px;"></div>
+    <div id="result-fields" style="display:none;margin-top:16px;"></div>
     <div class="share-preview" id="share-preview"></div>
     <div class="share-copied" id="share-copied"></div>
     <div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:14px;">
@@ -445,12 +423,12 @@
 <script>
 // ─── DATA ──────────────────────────────────────────────────────────────
 const _d = (s) => { const b = atob(s); const k = 42; const o = new Uint8Array(b.length); for(let i=0;i<b.length;i++) o[i]=b.charCodeAt(i)^k; return JSON.parse(new TextDecoder().decode(o)); };
-const _raw = _d("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");
-const PLAYERS = _raw.map(r => ({gamertag:r[0],team:r[1],gp:r[2],season:r[3],position:r[4],league:r[5]}));
+const _raw = _d("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");
+const PLAYERS = _raw.map(r => ({gamertag:r[0],team:r[1],gp:r[2],season:r[3],position:r[4],league:r[5],g:r[6],a:r[7]}));
 
 // ─── CONFIG ────────────────────────────────────────────────────────────
 const MAX_GUESSES = 4;
-const STATS = ["league","season","team","position","gp"];
+const STATS = ["season","team","gp","g","a"];
 const _lo = ["PHL D1","PHL D2","PHL D3"];
 const _so = [1,2,3];
 const _gc = 5;
@@ -471,6 +449,8 @@ function buildPlayerMap() {
         team: row.team,
         position: row.position,
         gp: row.gp,
+        g: row.g,
+        a: row.a,
         allTeams: new Set([row.team]),
       });
     } else {
@@ -482,6 +462,8 @@ function buildPlayerMap() {
         p.position = row.position;
         p.league = row.league;
         p.gp = row.gp;
+        p.g = row.g;
+        p.a = row.a;
       }
     }
   });
@@ -575,8 +557,8 @@ function evaluate(guessed, target) {
   const t = PLAYER_MAP.get(target.gamertag.toLowerCase());
   if (!g || !t) return STATS.map(() => ({ result: 'red', display: '?', arrow: null }));
   return STATS.map(stat => {
-    if (stat === 'gp') {
-      const gv = g.gp, tv = t.gp;
+    if (stat === 'gp' || stat === 'g' || stat === 'a') {
+      const gv = g[stat], tv = t[stat];
       if (gv === tv) return { result: 'green', display: String(gv), arrow: null };
       const diff = gv - tv;
       if (Math.abs(diff) <= GP_CLOSE) return { result: 'yellow', display: String(gv), arrow: diff > 0 ? '↓' : '↑' };
@@ -797,6 +779,24 @@ function showResult() {
     : 'The answer was:';
   document.getElementById('result-answer').textContent = _m.gamertag;
   document.getElementById('result-time').textContent = '';
+
+  const _fieldsEl = document.getElementById('result-fields');
+  if (!won) {
+    const _ans = PLAYER_MAP.get(_m.gamertag.toLowerCase());
+    if (_ans) {
+      const _labels = ['Season','Team','GP','G','A'];
+      const _vals = [_ans.season, _ans.team, _ans.gp, _ans.g, _ans.a];
+      _fieldsEl.innerHTML = `
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;max-width:480px;margin:0 auto;">
+          ${_labels.map(l => `<div style="font-family:'Barlow Condensed',sans-serif;font-size:0.65rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);text-align:center;padding-bottom:3px;">${l}</div>`).join('')}
+          ${_vals.map(v => `<div style="background:#003d25;border:1px solid var(--green);color:var(--green);border-radius:4px;padding:8px 4px;font-size:0.8rem;font-weight:500;text-align:center;">${v}</div>`).join('')}
+        </div>`;
+      _fieldsEl.style.display = '';
+    }
+  } else {
+    _fieldsEl.style.display = 'none';
+    _fieldsEl.innerHTML = '';
+  }
 
   showSharePreview();
 
