@@ -634,7 +634,7 @@ function evaluate(guessed, target) {
     if (gv === tv) return { result: 'green', display: String(gv), arrow: null };
     if (stat === 'league') {
       const gi = LEAGUE_ORDER.indexOf(gv), ti = LEAGUE_ORDER.indexOf(tv);
-      if (Math.abs(gi - ti) === 1) return { result: 'yellow', display: gv, arrow: gi > ti ? '↓' : '↑' };
+      if (Math.abs(gi - ti) === 1) return { result: 'yellow', display: gv, arrow: gi > ti ? '↑' : '↓' };
     }
     if (stat === 'season') {
       const gi = SEASON_ORDER.indexOf(Number(gv)), ti = SEASON_ORDER.indexOf(Number(tv));
