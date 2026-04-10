@@ -425,11 +425,11 @@
 <script>
 // ─── DATA ──────────────────────────────────────────────────────────────
 const _d = (s) => { const b = atob(s); const k = 42; const o = new Uint8Array(b.length); for(let i=0;i<b.length;i++) o[i]=b.charCodeAt(i)^k; return JSON.parse(new TextDecoder().decode(o)); };
-const _raw = _d("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");
+const _raw = _d("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");
 const PLAYERS = _raw.map(r => ({gamertag:r[0],team:r[1],gp:r[2],season:r[3],position:r[4],league:r[5],g:r[6],a:r[7]}));
 
 // ─── CONFIG ────────────────────────────────────────────────────────────
-const MAX_GUESSES = 4;
+const MAX_GUESSES = 6;
 const STATS = ["league","season","team","position","gp","g","a"];
 const _lo = ["PHL D1","PHL D2","PHL D3"];
 const _so = [1,2,3];
@@ -439,35 +439,40 @@ const SEASON_ORDER = _so;
 const GP_CLOSE = _gc;
 
 // ─── PLAYER MAP ────────────────────────────────────────────────────────
+// Phase 1: group all rows by player, tracking best (most recent) stats per league
+// Phase 2: for players in multiple leagues, randomly pick one league at runtime
 function buildPlayerMap() {
-  const map = new Map();
+  // leagueMap: gamertag -> { allTeams, gamertag, leagues: { leagueName -> best row } }
+  const leagueMap = new Map();
   PLAYERS.forEach(row => {
     const key = row.gamertag.toLowerCase();
-    if (!map.has(key)) {
-      map.set(key, {
-        gamertag: row.gamertag,
-        league: row.league,
-        season: row.season,
-        team: row.team,
-        position: row.position,
-        gp: row.gp,
-        g: row.g,
-        a: row.a,
-        allTeams: new Set([row.team]),
-      });
-    } else {
-      const p = map.get(key);
-      p.allTeams.add(row.team);
-      if (row.season > p.season) {
-        p.season = row.season;
-        p.team = row.team;
-        p.position = row.position;
-        p.league = row.league;
-        p.gp = row.gp;
-        p.g = row.g;
-        p.a = row.a;
-      }
+    if (!leagueMap.has(key)) {
+      leagueMap.set(key, { gamertag: row.gamertag, allTeams: new Set([row.team]), leagues: {} });
     }
+    const entry = leagueMap.get(key);
+    entry.allTeams.add(row.team);
+    const existing = entry.leagues[row.league];
+    if (!existing || row.season > existing.season) {
+      entry.leagues[row.league] = row;
+    }
+  });
+
+  // Phase 2: for each player randomly pick a league, use that league's best row
+  const map = new Map();
+  leagueMap.forEach((entry, key) => {
+    const leagueNames = Object.keys(entry.leagues);
+    const picked = entry.leagues[leagueNames[Math.floor(Math.random() * leagueNames.length)]];
+    map.set(key, {
+      gamertag: entry.gamertag,
+      league: picked.league,
+      season: picked.season,
+      team: picked.team,
+      position: picked.position,
+      gp: picked.gp,
+      g: picked.g,
+      a: picked.a,
+      allTeams: entry.allTeams,
+    });
   });
   return map;
 }
@@ -553,9 +558,63 @@ function renderDate() {
     d.toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'});
 }
 
+// Find the best matching row for a guessed player given confirmed league/season from prior guesses
+function getBestRow(gamertag) {
+  const key = gamertag.toLowerCase();
+  const mapEntry = PLAYER_MAP.get(key);
+  if (!mapEntry) return null;
+
+  // Determine confirmed league and season from previous green results
+  let confirmedLeague = null;
+  let confirmedSeason = null;
+  guesses.forEach(prev => {
+    const prevKey = prev.gamertag.toLowerCase();
+    const prevEntry = PLAYER_MAP.get(prevKey);
+    if (!prevEntry) return;
+    const t = PLAYER_MAP.get(_m ? _m.gamertag.toLowerCase() : '');
+    if (!t) return;
+    if (prevEntry.league === t.league) confirmedLeague = t.league;
+    if (prevEntry.season === t.season) confirmedSeason = t.season;
+  });
+
+  // Get all raw rows for this player
+  const playerRows = PLAYERS.filter(r => r.gamertag.toLowerCase() === key);
+  if (!playerRows.length) return mapEntry;
+
+  // Score each row: +2 for matching confirmed league, +1 for matching confirmed season
+  // Among tied scores pick the most recent season, then D1 over D2
+  let best = null, bestScore = -1;
+  playerRows.forEach(r => {
+    let score = 0;
+    if (confirmedLeague && r.league === confirmedLeague) score += 2;
+    if (confirmedSeason && r.season === confirmedSeason) score += 1;
+    const leagueIdx = LEAGUE_ORDER.indexOf(r.league);
+    if (score > bestScore ||
+       (score === bestScore && best && (
+         r.season > best.season ||
+         (r.season === best.season && leagueIdx < LEAGUE_ORDER.indexOf(best.league))
+       ))) {
+      best = r;
+      bestScore = score;
+    }
+  });
+
+  // Return a player object using the best row but with allTeams from PLAYER_MAP
+  return best ? {
+    gamertag: mapEntry.gamertag,
+    league: best.league,
+    season: best.season,
+    team: best.team,
+    position: best.position,
+    gp: best.gp,
+    g: best.g,
+    a: best.a,
+    allTeams: mapEntry.allTeams,
+  } : mapEntry;
+}
+
 function evaluate(guessed, target) {
-  // Always resolve from PLAYER_MAP so allTeams is always a proper Set
-  const g = PLAYER_MAP.get(guessed.gamertag.toLowerCase());
+  const g = getBestRow(guessed.gamertag);
   const t = PLAYER_MAP.get(target.gamertag.toLowerCase());
   if (!g || !t) return STATS.map(() => ({ result: 'red', display: '?', arrow: null }));
   return STATS.map(stat => {
