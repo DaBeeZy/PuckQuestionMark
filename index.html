@@ -689,6 +689,40 @@ function renderEmpty() {
 }
 
 
+// ─── CONFIRMED FILTERS ─────────────────────────────────────────────────
+// Scan previous guesses and return any league/season/team confirmed green
+function getConfirmedFilters() {
+  const confirmed = { league: null, season: null, team: null };
+  if (!_m) return confirmed;
+  const t = PLAYER_MAP.get(_m.gamertag.toLowerCase());
+  if (!t) return confirmed;
+  guesses.forEach(prev => {
+    const g = getBestRow(prev.gamertag);
+    if (!g) return;
+    if (g.league === t.league)   confirmed.league = t.league;
+    if (g.season === t.season)   confirmed.season = t.season;
+    if (g.team   === t.team)     confirmed.team   = t.team;
+  });
+  return confirmed;
+}
+
+// Return the set of valid player names given confirmed filters
+// A player is valid if at least one of their raw rows satisfies all confirmed filters
+function getValidPlayerNames() {
+  const { league, season, team } = getConfirmedFilters();
+  const guessedTags = new Set(guesses.map(g => g.gamertag.toLowerCase()));
+  const validNames = new Set();
+  PLAYERS.forEach(row => {
+    const key = row.gamertag.toLowerCase();
+    if (guessedTags.has(key)) return;
+    if (league && row.league !== league) return;
+    if (season && row.season !== season) return;
+    if (team   && row.team   !== team)   return;
+    validNames.add(key);
+  });
+  return validNames;
+}
+
 // ─── AUTOCOMPLETE ──────────────────────────────────────────────────────
 function onSearch() {
   const q = document.getElementById('search-input').value.trim().toLowerCase();
@@ -696,9 +730,9 @@ function onSearch() {
   document.getElementById('guess-btn').disabled = true;
   if (!q) { document.getElementById('autocomplete').style.display = 'none'; return; }
 
-  const guessedTags = guesses.map(g => g.gamertag.toLowerCase());
+  const validNames = getValidPlayerNames();
   filteredPlayers = UNIQUE_PLAYERS.filter(p =>
-    p.gamertag.toLowerCase().includes(q) && !guessedTags.includes(p.gamertag.toLowerCase())
+    p.gamertag.toLowerCase().includes(q) && validNames.has(p.gamertag.toLowerCase())
   );
   selectedIdx = -1;
   renderAutocomplete();
