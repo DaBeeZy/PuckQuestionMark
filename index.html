@@ -109,7 +109,7 @@
   /* COLUMN HEADERS */
   .grid-header {
     display: grid;
-    grid-template-columns: 180px repeat(7, 1fr);
+    grid-template-columns: 180px repeat(8, 1fr);
     gap: 4px;
     margin-bottom: 6px;
   }
@@ -130,7 +130,7 @@
 
   .guess-row {
     display: grid;
-    grid-template-columns: 180px repeat(7, 1fr);
+    grid-template-columns: 180px repeat(8, 1fr);
     gap: 4px;
     animation: rowIn 0.3s ease;
   }
@@ -179,7 +179,7 @@
   /* Empty placeholder rows */
   .empty-row {
     display: grid;
-    grid-template-columns: 180px repeat(7, 1fr);
+    grid-template-columns: 180px repeat(8, 1fr);
     gap: 4px;
   }
   .empty-cell {
@@ -352,7 +352,7 @@
   /* Responsive */
   @media (max-width: 680px) {
     .grid-header, .guess-row, .empty-row {
-      grid-template-columns: 130px repeat(7, 1fr);
+      grid-template-columns: 130px repeat(8, 1fr);
     }
     .col-label { font-size: 0.6rem; letter-spacing: 1px; }
     .cell { font-size: 0.62rem; min-height: 48px; padding: 6px 2px; }
@@ -381,7 +381,9 @@
     <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.78rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--text);margin-bottom:8px;">Guide</div>
     <div style="margin-bottom:4px;"><span style="color:var(--text);font-weight:500;">Season</span> — Most recent season correct player finished on a roster and met minimum GP threshold (5+ GP)</div>
     <div style="margin-bottom:4px;"><span style="color:var(--text);font-weight:500;">Team</span> — Yellow means the guessed player was a teammate at one point with the correct player</div>
-    <div><span style="color:var(--text);font-weight:500;">GP / G / A</span> — Yellow means the guessed number is within 5 of the correct number</div>
+    <div style="margin-bottom:4px;"><span style="color:var(--text);font-weight:500;">Number</span> — Based on most recent season, yellow means the guessed number is within 5 of the correct number</div>
+    <div style="margin-bottom:4px;"><span style="color:var(--text);font-weight:500;">GP / G / A</span> — Yellow means the guessed number is within 5 of the correct number</div>
+    <div><span style="color:var(--text);font-weight:500;">Hint</span> — Autofill list shrinks when you guess the correct League, Season, or Team</div>
   </div>
 
   <div class="input-area" id="input-area">
@@ -394,6 +396,7 @@
 
   <div class="grid-header">
     <div class="col-label">Player</div>
+    <div class="col-label">Number</div>
     <div class="col-label">League</div>
     <div class="col-label">Season</div>
     <div class="col-label">Team</div>
@@ -426,12 +429,12 @@
 <script>
 // ─── DATA ──────────────────────────────────────────────────────────────
 const _d = (s) => { const b = atob(s); const k = 42; const o = new Uint8Array(b.length); for(let i=0;i<b.length;i++) o[i]=b.charCodeAt(i)^k; return JSON.parse(new TextDecoder().decode(o)); };
-const _raw = _d("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");
-const PLAYERS = _raw.map(r => ({gamertag:r[0],team:r[1],gp:r[2],season:r[3],position:r[4],league:r[5],g:r[6],a:r[7]}));
+const _raw = _d("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");
+const PLAYERS = _raw.map(r => ({gamertag:r[0],team:r[1],gp:r[2],season:r[3],position:r[4],league:r[5],g:r[6],a:r[7],number:r[8]}));
 
 // ─── CONFIG ────────────────────────────────────────────────────────────
 const MAX_GUESSES = 6;
-const STATS = ["league","season","team","position","gp","g","a"];
+const STATS = ["number","league","season","team","position","gp","g","a"];
 const _lo = ["PHL D1","PHL D2","PHL D3"];
 const _so = [1,2,3];
 const _gc = 5;
@@ -472,6 +475,7 @@ function buildPlayerMap() {
       gp: picked.gp,
       g: picked.g,
       a: picked.a,
+      number: picked.number,
       allTeams: entry.allTeams,
     });
   });
@@ -610,6 +614,7 @@ function getBestRow(gamertag) {
     gp: best.gp,
     g: best.g,
     a: best.a,
+    number: best.number,
     allTeams: mapEntry.allTeams,
   } : mapEntry;
 }
@@ -625,6 +630,15 @@ function evaluate(guessed, target) {
       const diff = gv - tv;
       if (Math.abs(diff) <= GP_CLOSE) return { result: 'yellow', display: String(gv), arrow: diff > 0 ? '↓' : '↑' };
       return { result: 'red', display: String(gv), arrow: diff > 0 ? '↓' : '↑' };
+    }
+    if (stat === 'number') {
+      const gv = g.number, tv = t.number;
+      if (gv === tv) return { result: 'green', display: gv, arrow: null };
+      const gn = parseInt(String(gv).replace('#',''), 10);
+      const tn = parseInt(String(tv).replace('#',''), 10);
+      const diff = gn - tn;
+      if (Math.abs(diff) <= GP_CLOSE) return { result: 'yellow', display: gv, arrow: diff > 0 ? '↓' : '↑' };
+      return { result: 'red', display: gv, arrow: diff > 0 ? '↓' : '↑' };
     }
     const gv = g[stat], tv = t[stat];
     if (stat === 'team') {
@@ -680,7 +694,7 @@ function renderEmpty() {
   for (let i = 0; i < remaining; i++) {
     const row = document.createElement('div');
     row.className = 'empty-row';
-    for (let j = 0; j < 8; j++) {
+    for (let j = 0; j < 9; j++) {
       const c = document.createElement('div');
       c.className = 'empty-cell';
       row.appendChild(c);
@@ -693,7 +707,7 @@ function renderEmpty() {
 // ─── CONFIRMED FILTERS ─────────────────────────────────────────────────
 // Scan previous guesses and return any league/season/team confirmed green
 function getConfirmedFilters() {
-  const confirmed = { league: null, season: null, team: null };
+  const confirmed = { league: null, season: null, team: null, number: null };
   if (!_m) return confirmed;
   const t = PLAYER_MAP.get(_m.gamertag.toLowerCase());
   if (!t) return confirmed;
@@ -703,6 +717,7 @@ function getConfirmedFilters() {
     if (g.league === t.league)   confirmed.league = t.league;
     if (g.season === t.season)   confirmed.season = t.season;
     if (g.team   === t.team)     confirmed.team   = t.team;
+    if (g.number === t.number)   confirmed.number = t.number;
   });
   return confirmed;
 }
@@ -710,7 +725,7 @@ function getConfirmedFilters() {
 // Return the set of valid player names given confirmed filters
 // A player is valid if at least one of their raw rows satisfies all confirmed filters
 function getValidPlayerNames() {
-  const { league, season, team } = getConfirmedFilters();
+  const { league, season, team, number } = getConfirmedFilters();
   const guessedTags = new Set(guesses.map(g => g.gamertag.toLowerCase()));
   const validNames = new Set();
   PLAYERS.forEach(row => {
@@ -719,6 +734,7 @@ function getValidPlayerNames() {
     if (league && row.league !== league) return;
     if (season && row.season !== season) return;
     if (team   && row.team   !== team)   return;
+    if (number && row.number !== number) return;
     validNames.add(key);
   });
   return validNames;
@@ -880,10 +896,10 @@ function showResult() {
   if (!won) {
     const _ans = PLAYER_MAP.get(_m.gamertag.toLowerCase());
     if (_ans) {
-      const _labels = ['League','Season','Team','Pos','GP','G','A'];
-      const _vals = [_ans.league, _ans.season, _ans.team, _ans.position, _ans.gp, _ans.g, _ans.a];
+      const _labels = ['Number','League','Season','Team','Pos','GP','G','A'];
+      const _vals = [_ans.number, _ans.league, _ans.season, _ans.team, _ans.position, _ans.gp, _ans.g, _ans.a];
       _fieldsEl.innerHTML = `
-        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;max-width:480px;margin:0 auto;">
+        <div style="display:grid;grid-template-columns:repeat(8,1fr);gap:4px;max-width:480px;margin:0 auto;">
           ${_labels.map(l => `<div style="font-family:'Barlow Condensed',sans-serif;font-size:0.65rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);text-align:center;padding-bottom:3px;">${l}</div>`).join('')}
           ${_vals.map(v => `<div style="background:#003d25;border:1px solid var(--green);color:var(--green);border-radius:4px;padding:8px 4px;font-size:0.8rem;font-weight:500;text-align:center;">${v}</div>`).join('')}
         </div>`;
