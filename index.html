@@ -504,6 +504,7 @@ function getDailyPlayer() {
 
 function setMode(m) {
   mode = m;
+  sessionStorage.setItem('puck_mode', m);
   document.getElementById('tab-daily').classList.toggle('active', m === 'daily');
   document.getElementById('tab-free').classList.toggle('active',  m === 'free');
   document.getElementById('daily-info').style.display = m === 'daily' ? '' : 'none';
@@ -533,9 +534,28 @@ function resetGame() {
       _timerStart = null; _timerEnd = null;
     }
   } else {
-    _m = UNIQUE_PLAYERS[Math.floor(Math.random() * UNIQUE_PLAYERS.length)];
-    guesses = []; gameOver = false;
-    _timerStart = null; _timerEnd = null;
+    // Free Play: restore in-progress game from sessionStorage if it exists
+    const saved = sessionStorage.getItem('puck_free');
+    if (saved) {
+      const s = JSON.parse(saved);
+      // Find mystery player by gamertag (since we only saved the name)
+      const restored = UNIQUE_PLAYERS.find(p => p.gamertag.toLowerCase() === s.mysteryGamertag.toLowerCase());
+      if (restored) {
+        _m = restored;
+        guesses = s.guesses;
+        gameOver = s.gameOver;
+        _timerStart = s.timerStart || null;
+        _timerEnd = s.timerEnd || null;
+      } else {
+        _m = UNIQUE_PLAYERS[Math.floor(Math.random() * UNIQUE_PLAYERS.length)];
+        guesses = []; gameOver = false;
+        _timerStart = null; _timerEnd = null;
+      }
+    } else {
+      _m = UNIQUE_PLAYERS[Math.floor(Math.random() * UNIQUE_PLAYERS.length)];
+      guesses = []; gameOver = false;
+      _timerStart = null; _timerEnd = null;
+    }
   }
   _sp = null;
   selectedIdx = -1;
@@ -804,11 +824,17 @@ function submitGuess() {
     _timerEnd = Date.now();
     gameOver = true;
   }
-  // Save daily state after every guess (not just at game end)
+  // Save state after every guess (not just at game end)
   if (mode === 'daily') {
     sessionStorage.setItem('puck_daily', JSON.stringify({
       date: new Date().toDateString(),
       guesses, gameOver, solved: won,
+      timerStart: _timerStart, timerEnd: _timerEnd
+    }));
+  } else {
+    sessionStorage.setItem('puck_free', JSON.stringify({
+      mysteryGamertag: _m.gamertag,
+      guesses, gameOver,
       timerStart: _timerStart, timerEnd: _timerEnd
     }));
   }
@@ -926,6 +952,7 @@ function getCountdown() {
 }
 
 function playAgain() {
+  sessionStorage.removeItem('puck_free');
   resetGame();
 }
 
@@ -934,7 +961,7 @@ function playAgain() {
 // ─── INIT ──────────────────────────────────────────────────────────────
 document.getElementById('search-input').addEventListener('input', onSearch);
 document.getElementById('search-input').addEventListener('keydown', onKey);
-setMode('daily');
+setMode(sessionStorage.getItem('puck_mode') || 'daily');
 </script>
 </body>
 </html>
