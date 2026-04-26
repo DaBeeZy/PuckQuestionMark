@@ -189,7 +189,7 @@
     min-height: 56px;
   }
 
-  /* INPUTt */
+  /* INPUT */
   .input-area {
     display: flex;
     gap: 8px;
@@ -815,13 +815,14 @@ function submitGuess() {
   if (won || lost) {
     _timerEnd = Date.now();
     gameOver = true;
-    if (mode === 'daily') {
-      sessionStorage.setItem('puck_daily', JSON.stringify({
-        date: new Date().toDateString(),
-        guesses, gameOver, solved: won,
-        timerStart: _timerStart, timerEnd: _timerEnd
-      }));
-    }
+  }
+  // Save daily state after every guess (not just at game end)
+  if (mode === 'daily') {
+    sessionStorage.setItem('puck_daily', JSON.stringify({
+      date: new Date().toDateString(),
+      guesses, gameOver, solved: won,
+      timerStart: _timerStart, timerEnd: _timerEnd
+    }));
   }
   if (gameOver) {
     renderAll();
