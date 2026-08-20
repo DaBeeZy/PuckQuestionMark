@@ -1068,12 +1068,23 @@ function buildShareText() {
   const won = guesses.some(g => g.gamertag.toLowerCase() === _m.gamertag.toLowerCase());
   const d = new Date().toLocaleDateString('en-US', {month:'short', day:'numeric'});
   const modeLabel = mode === 'daily' ? 'Daily' : 'Free Play';
-  const result = won ? `${guesses.length}/${MAX_GUESSES}` : `X/${MAX_GUESSES}`;
+  
+  let result = won ? `${guesses.length}/${MAX_GUESSES}` : `X/${MAX_GUESSES}`;
+  
+  // Calculate and format the time if a game was completed
+  if (_timerStart && _timerEnd) {
+    const _ms = _timerEnd - _timerStart;
+    const _min = String(Math.floor(_ms / 60000)).padStart(2, '0');
+    const _sec = String(Math.floor((_ms % 60000) / 1000)).padStart(2, '0');
+    result += ` in ${_min}:${_sec}`;
+  }
+
   const EMOJI = { green: '🟩', yellow: '🟨', red: '🟥' };
   const rows = guesses.map(g => {
     const results = evaluate(g, _m);
     return results.map(r => EMOJI[r.result]).join('');
   }).join('\n');
+  
   return `PUCK? ${modeLabel} — ${d}\n${result}\n\n${rows}`;
 }
 
